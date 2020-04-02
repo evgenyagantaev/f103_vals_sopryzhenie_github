@@ -1,26 +1,9 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file    stm32f1xx_it.c
-  * @brief   Interrupt Service Routines.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f1xx_it.h"
+
+#include "usart1_buffer_interface.h"
+#include "usart2_buffer_interface.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -203,13 +186,25 @@ void SysTick_Handler(void)
   */
 void USART1_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART1_IRQn 0 */
+	uint32_t isrflags   = USART1->SR;
+	uint32_t cr1its     = USART1->CR1;
+	uint32_t errorflags;
 
-  /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
-  /* USER CODE BEGIN USART1_IRQn 1 */
+	uint16_t usart_data;
 
-  /* USER CODE END USART1_IRQn 1 */
+	/* If no error occurs */
+	errorflags = (isrflags & (uint32_t)(USART_SR_PE | USART_SR_FE | USART_SR_ORE | USART_SR_NE));
+	if (errorflags == RESET)
+	{
+		/* UART in mode Receiver ---------------------------------------------------*/
+		 if (((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
+		{
+			usart_data = (uint16_t) USART1->DR;
+			usart1_new_byte_flag_set();
+			usart1_buffer_obj_write((char)usart_data);
+
+		}
+	}
 }
 
 /**
@@ -217,13 +212,25 @@ void USART1_IRQHandler(void)
   */
 void USART2_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART2_IRQn 0 */
+	uint32_t isrflags   = USART2->SR;
+	uint32_t cr1its     = USART2->CR1;
+	uint32_t errorflags;
 
-  /* USER CODE END USART2_IRQn 0 */
-  HAL_UART_IRQHandler(&huart2);
-  /* USER CODE BEGIN USART2_IRQn 1 */
+	uint16_t usart_data;
 
-  /* USER CODE END USART2_IRQn 1 */
+	/* If no error occurs */
+	errorflags = (isrflags & (uint32_t)(USART_SR_PE | USART_SR_FE | USART_SR_ORE | USART_SR_NE));
+	if (errorflags == RESET)
+	{
+		/* UART in mode Receiver ---------------------------------------------------*/
+		 if (((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
+		{
+			usart_data = (uint16_t) USART2->DR;
+			usart2_new_byte_flag_set();
+			usart2_buffer_obj_write((char)usart_data);
+
+		}
+	}
 }
 
 /* USER CODE BEGIN 1 */

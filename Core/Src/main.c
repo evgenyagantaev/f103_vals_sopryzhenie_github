@@ -7,18 +7,12 @@
 #include "ssd1306.h"
 #include "stdio.h"
 
-/* Private includes ----------------------------------------------------------*/
-
-/* Private typedef -----------------------------------------------------------*/
-
-/* Private define ------------------------------------------------------------*/
-
-/* Private macro -------------------------------------------------------------*/
-
-/* Private variables ---------------------------------------------------------*/
+#include "usart1_buffer_interface.h"
+#include "usart2_buffer_interface.h"
+#include "interface_board_interface.h"
+#include "vest_interface.h"
 
 
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 
 
@@ -40,6 +34,11 @@ int main(void)
 	MX_USART1_UART_Init();
 	MX_USART2_UART_Init();
 	MX_USART3_UART_Init();
+
+	usart1_object_init();
+	usart2_object_init();
+	interface_board_object_init();
+	vest_object_init();
 
 	ssd1306_set_i2c_port(&hi2c1, 1);
 	ssd1306_Init();
@@ -63,6 +62,7 @@ int main(void)
 	/* Infinite loop */
 	while (1)
 	{
+		//*
 		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_RESET);
 		HAL_Delay(500);
 		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_SET);
@@ -75,7 +75,12 @@ int main(void)
 		ssd1306_SetCursor(0,30);
 		ssd1306_WriteString(message, Font_11x18, White);
 		ssd1306_UpdateScreen();
+		//*/
 
+		usart1_buffer_action();
+		usart2_buffer_action();
+		interface_board_action();
+		vest_action();
 	}
 
 }
