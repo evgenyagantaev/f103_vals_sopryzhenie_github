@@ -15,9 +15,13 @@ void usart2_buffer_obj_read_reset()
 void usart2_buffer_obj_write(char data)
 {
 
+	if(data == '\n')
+		vest_new_message_received_flag_set();
+
 	if(usart2_buffer_write_index < USART2_BUFFER_LENGTH)
 	{
 		usart2_buffer[usart2_buffer_write_index] = data;
+
 		usart2_buffer_write_index++;
 	}
 }
@@ -64,10 +68,7 @@ void usart2_buffer_action()
 	{
 		usart2_new_byte_flag_reset();
 
-		if(usart2_buffer_obj_read_last() == '\n')
-		{
-			vest_new_message_received_flag_set();
-		}
+
 	}
 }
 

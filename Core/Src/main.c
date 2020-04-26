@@ -11,6 +11,7 @@
 #include "usart2_buffer_interface.h"
 #include "interface_board_interface.h"
 #include "vest_interface.h"
+#include "pulse_impact_interface.h"
 
 
 void SystemClock_Config(void);
@@ -31,14 +32,8 @@ int main(void)
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
 	MX_I2C1_Init();
-	MX_USART1_UART_Init();
-	MX_USART2_UART_Init();
-	MX_USART3_UART_Init();
 
-	usart1_object_init();
-	usart2_object_init();
-	interface_board_object_init();
-	vest_object_init();
+	//****************************************************************
 
 	ssd1306_set_i2c_port(&hi2c1, 1);
 	ssd1306_Init();
@@ -51,23 +46,50 @@ int main(void)
 	ssd1306_UpdateScreen();
 	HAL_Delay(100);
 
+	pulse_impact_object_init();
+
 	ssd1306_SetCursor(0,0);
 	ssd1306_WriteString("VALS", Font_16x26, White);
 	ssd1306_UpdateScreen();
 	HAL_Delay(100);
 
+	//****************************************************************
+
+	MX_USART1_UART_Init();
+	MX_USART2_UART_Init();
+	MX_USART3_UART_Init();
+
+	usart1_object_init();
+	usart2_object_init();
+	interface_board_object_init();
+	vest_object_init();
+
+
+
 	int counter = 0;
 	char message[64];
+
+	ssd1306_Fill(Black);
+	ssd1306_UpdateScreen();
+	HAL_Delay(100);
+
+	/* Disable SysTick Interrupt */
+	//SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+
+	usart2_buffer_obj_write_reset();
+	vest_new_message_received_flag_reset();
 
 	/* Infinite loop */
 	while (1)
 	{
-		//*
+		/*
 		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_RESET);
 		HAL_Delay(500);
 		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_SET);
 		HAL_Delay(500);
+		//*/
 
+		/*
 		counter++;
 		sprintf(message, "%d", counter);
 		ssd1306_SetCursor(0,30);
@@ -81,6 +103,7 @@ int main(void)
 		usart2_buffer_action();
 		interface_board_action();
 		vest_action();
+		pulse_impact_action();
 	}
 
 }
