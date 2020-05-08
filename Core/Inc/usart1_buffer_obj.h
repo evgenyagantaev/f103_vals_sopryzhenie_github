@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-#define USART1_BUFFER_LENGTH 128
+//#define USART1_BUFFER_LENGTH 128
 
 static char usart1_buffer[USART1_BUFFER_LENGTH];
 static int usart1_buffer_write_index;

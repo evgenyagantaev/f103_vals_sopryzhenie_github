@@ -13,9 +13,32 @@
 #include "vest_interface.h"
 #include "pulse_impact_interface.h"
 
-
 void SystemClock_Config(void);
 
+
+char usart1_buffer[2][USART1_BUFFER_LENGTH];
+int usart1_write_buffer = 0;
+int usart1_read_buffer = 1;
+int usart1_write_index = 0;
+int usart1_new_message_ready_flag = 0;
+int usart1_message_length = 0;
+int usart1_old_message_saved = 1;
+int usart1_message_lost = 0;
+int usart1_received_messages = 0;
+int usart1_processed_messages = 0;
+
+char usart2_buffer[2][USART2_BUFFER_LENGTH];
+int usart2_write_buffer = 0;
+int usart2_read_buffer = 1;
+int usart2_write_index = 0;
+int usart2_new_message_ready_flag = 0;
+int usart2_message_length = 0;
+int usart2_old_message_saved = 1;
+int usart2_message_lost = 0;
+int usart2_received_messages = 0;
+int usart2_processed_messages = 0;
+
+int vest_interface_condition = 0;   // ozhidanie adresa (0); adres poluchen (1)
 
 int main(void)
 {
@@ -60,23 +83,23 @@ int main(void)
 	MX_USART3_UART_Init();
 
 	usart1_object_init();
-	usart2_object_init();
+	//usart2_object_init();
 	interface_board_object_init();
 	vest_object_init();
 
 
 
-	int counter = 0;
-	char message[64];
+	//int counter = 0;
+	//char message[64];
 
-	ssd1306_Fill(Black);
-	ssd1306_UpdateScreen();
-	HAL_Delay(100);
+	//ssd1306_Fill(Black);
+	//ssd1306_UpdateScreen();
+	//HAL_Delay(100);
 
 	/* Disable SysTick Interrupt */
 	//SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
 
-	usart2_buffer_obj_write_reset();
+	//usart2_buffer_obj_write_reset();
 	vest_new_message_received_flag_reset();
 
 	/* Infinite loop */
@@ -99,8 +122,59 @@ int main(void)
 		ssd1306_UpdateScreen();
 		//*/
 
+		if(usart2_new_message_ready_flag)
+		{
+
+			if (vest_interface_condition == 0)
+			{
+				char vest_aux_message[64];
+
+				usart2_new_message_ready_flag = 0;
+				usart2_processed_messages++;
+
+				// copy message
+				usart2_old_message_saved = 0;
+				int i;
+				for(i=0; (i<=usart2_message_length)&&(i<64); i++)
+					vest_aux_message[i] = usart2_buffer[usart2_read_buffer][i];
+				usart2_old_message_saved = 1;
+
+
+				// debug
+				//vest_aux_message[usart2_message_length-2] = 0;
+				//vest_aux_message[11] = 0;
+
+				ssd1306_SetCursor(0,44);
+				ssd1306_WriteString("           ", Font_11x18, White);
+				ssd1306_SetCursor(0,44);
+				ssd1306_WriteString(vest_aux_message, Font_11x18, White);
+				ssd1306_UpdateScreen();
+
+				vest_receive_address(&(vest_aux_message[5]));
+				vest_new_message_received_flag_set();
+			}
+			else
+			{
+				char vest_aux_message[128];
+
+				usart2_new_message_ready_flag = 0;
+				usart2_processed_messages++;
+
+				// copy message
+				usart2_old_message_saved = 0;
+				int i;
+				for(i=0; i<=usart2_message_length; i++)
+					vest_aux_message[i] = usart2_buffer[usart2_read_buffer][i];
+				usart2_old_message_saved = 1;
+
+
+				vest_receive_message(vest_aux_message);
+				vest_new_message_received_flag_set();
+			}
+		}
+
 		usart1_buffer_action();
-		usart2_buffer_action();
+		//usart2_buffer_action();
 		interface_board_action();
 		vest_action();
 		pulse_impact_action();

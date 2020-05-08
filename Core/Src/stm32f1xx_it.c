@@ -4,6 +4,14 @@
 
 #include "usart1_buffer_interface.h"
 #include "usart2_buffer_interface.h"
+
+#include "ssd1306.h"
+#include "stdio.h"
+
+#include "extern_globals.h"
+
+extern int vest_interface_condition;   // ozhidanie adresa (0); adres poluchen (1)
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -205,6 +213,20 @@ void USART1_IRQHandler(void)
 
 		}
 	}
+	else // some errors
+	{
+		ssd1306_SetCursor(0,0);
+		ssd1306_WriteString("usart1     ", Font_11x18, White);
+		ssd1306_SetCursor(0,22);
+		ssd1306_WriteString("error      ", Font_11x18, White);
+		ssd1306_UpdateScreen();
+
+		// clear error flags
+		uint32_t aux;
+		aux = USART1->SR;
+		aux = USART1->DR;
+		UNUSED(aux);
+	}
 }
 
 /**
@@ -223,13 +245,89 @@ void USART2_IRQHandler(void)
 	if (errorflags == RESET)
 	{
 		/* UART in mode Receiver ---------------------------------------------------*/
-		 if (((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
+		if (((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
 		{
 			usart_data = (uint16_t) USART2->DR;
-			usart2_new_byte_flag_set();
-			usart2_buffer_obj_write((char)usart_data);
+			usart2_buffer[usart2_write_buffer][usart2_write_index] = (char)usart_data;
+			usart2_write_index++;
+			if((char)usart_data == '\n') // new full message received
+			{
+				if(usart2_write_index > 1)
+				{
+
+					if (vest_interface_condition == 0) //
+					{
+						if(usart2_buffer[usart2_write_buffer][1]=='a' && usart2_buffer[usart2_write_buffer][2]=='d' && usart2_buffer[usart2_write_buffer][3]=='d' && usart2_buffer[usart2_write_buffer][4]=='r')
+						{
+							usart2_received_messages++;
+
+							if(usart2_old_message_saved)
+							{
+								usart2_buffer[usart2_write_buffer][usart2_write_index] = 0;
+								usart2_message_length = usart2_write_index;
+								usart2_write_index = 0;
+								usart2_write_buffer = (usart2_write_buffer + 1) % 2;
+								usart2_read_buffer = (usart2_read_buffer + 1) % 2;
+								usart2_new_message_ready_flag = 1;
+							}
+							else
+							{
+								usart2_write_index = 0;
+								usart2_message_lost = 1;
+							}
+						}
+						else
+							usart2_write_index = 0;
+					}
+					else
+					{
+						//if(usart2_buffer[usart2_write_buffer][0]=='R')
+						{
+							usart2_received_messages++;
+
+							if(usart2_old_message_saved)
+							{
+								usart2_buffer[usart2_write_buffer][usart2_write_index] = 0;
+								usart2_message_length = usart2_write_index;
+								usart2_write_index = 0;
+								usart2_write_buffer = (usart2_write_buffer + 1) % 2;
+								usart2_read_buffer = (usart2_read_buffer + 1) % 2;
+								usart2_new_message_ready_flag = 1;
+							}
+							else
+							{
+								usart2_write_index = 0;
+								usart2_message_lost = 1;
+							}
+						}
+						//else
+							//usart2_write_index = 0;
+					}
+				}
+
+
+			}
+			else
+			{
+				if(usart2_write_index >= USART2_BUFFER_LENGTH) // buffer overflow
+					usart2_write_index = 0;
+			}
 
 		}
+	}
+	else // some errors
+	{
+		ssd1306_SetCursor(0,0);
+		ssd1306_WriteString("usart2     ", Font_11x18, White);
+		ssd1306_SetCursor(0,22);
+		ssd1306_WriteString("error      ", Font_11x18, White);
+		ssd1306_UpdateScreen();
+
+		// clear error flags
+		uint32_t aux;
+		aux = USART2->SR;
+		aux = USART2->DR;
+		UNUSED(aux);
 	}
 }
 

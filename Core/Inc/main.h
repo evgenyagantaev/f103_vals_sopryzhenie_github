@@ -10,6 +10,9 @@ extern "C" {
 #include "stdio.h"
 #include "string.h"
 
+#define USART1_BUFFER_LENGTH 256
+#define USART2_BUFFER_LENGTH 256
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 

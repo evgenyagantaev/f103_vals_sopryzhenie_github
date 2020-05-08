@@ -18,7 +18,6 @@ C_SRCS += \
 ../Core/Src/system_stm32f1xx.c \
 ../Core/Src/usart.c \
 ../Core/Src/usart1_buffer_interface.c \
-../Core/Src/usart2_buffer_interface.c \
 ../Core/Src/vest_interface.c 
 
 OBJS += \
@@ -36,7 +35,6 @@ OBJS += \
 ./Core/Src/system_stm32f1xx.o \
 ./Core/Src/usart.o \
 ./Core/Src/usart1_buffer_interface.o \
-./Core/Src/usart2_buffer_interface.o \
 ./Core/Src/vest_interface.o 
 
 C_DEPS += \
@@ -54,7 +52,6 @@ C_DEPS += \
 ./Core/Src/system_stm32f1xx.d \
 ./Core/Src/usart.d \
 ./Core/Src/usart1_buffer_interface.d \
-./Core/Src/usart2_buffer_interface.d \
 ./Core/Src/vest_interface.d 
 
 
@@ -87,8 +84,6 @@ Core/Src/usart.o: ../Core/Src/usart.c
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DUSE_HAL_DRIVER -DSTM32F103xB -DDEBUG -c -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I../Core/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/STM32F1xx_HAL_Driver/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/usart.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 Core/Src/usart1_buffer_interface.o: ../Core/Src/usart1_buffer_interface.c
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DUSE_HAL_DRIVER -DSTM32F103xB -DDEBUG -c -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I../Core/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/STM32F1xx_HAL_Driver/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/usart1_buffer_interface.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
-Core/Src/usart2_buffer_interface.o: ../Core/Src/usart2_buffer_interface.c
-	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DUSE_HAL_DRIVER -DSTM32F103xB -DDEBUG -c -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I../Core/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/STM32F1xx_HAL_Driver/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/usart2_buffer_interface.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 Core/Src/vest_interface.o: ../Core/Src/vest_interface.c
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DUSE_HAL_DRIVER -DSTM32F103xB -DDEBUG -c -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I../Core/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/STM32F1xx_HAL_Driver/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/vest_interface.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 

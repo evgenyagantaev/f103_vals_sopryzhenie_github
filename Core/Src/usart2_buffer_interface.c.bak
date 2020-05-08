@@ -15,14 +15,20 @@ void usart2_buffer_obj_read_reset()
 void usart2_buffer_obj_write(char data)
 {
 
-	if(data == '\n')
-		vest_new_message_received_flag_set();
+
 
 	if(usart2_buffer_write_index < USART2_BUFFER_LENGTH)
 	{
 		usart2_buffer[usart2_buffer_write_index] = data;
 
 		usart2_buffer_write_index++;
+	}
+
+	if(data == '\n')
+	{
+		vest_new_message_received_flag_set();
+		usart2_buffer_message_length = usart2_buffer_write_index;
+		usart2_buffer_write_index = 0;
 	}
 }
 
@@ -34,12 +40,14 @@ char usart2_buffer_obj_read()
 	return return_data;
 }
 
+/*
 char usart2_buffer_obj_read_last()
 {
 	char return_data = usart2_buffer[(usart2_buffer_write_index - 1)];
 
 	return return_data;
 }
+*/
 
 void usart2_new_byte_flag_set()
 {
@@ -74,16 +82,17 @@ void usart2_buffer_action()
 
 void usart2_buffer_get_message(char *message_buffer)
 {
-	if(usart2_buffer_write_index < USART2_BUFFER_LENGTH)
+	if((usart2_buffer_message_length > 0) && (usart2_buffer_message_length < USART2_BUFFER_LENGTH))
 	{
-		usart2_buffer[usart2_buffer_write_index] = 0;
+		usart2_buffer[usart2_buffer_message_length] = 0;
 
 		int i;
 
-		for(i=0; i<=usart2_buffer_write_index; i++)
+		for(i=0; i<=usart2_buffer_message_length; i++)
 			message_buffer[i] = usart2_buffer[i];
 
-		usart2_buffer_obj_write_reset();
+		//usart2_buffer_obj_write_reset();
+		usart2_buffer_message_length = 0;
 	}
 }
 
