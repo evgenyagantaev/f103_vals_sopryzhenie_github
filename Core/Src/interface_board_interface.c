@@ -1,6 +1,11 @@
 #include "interface_board_obj.h"
 #include "interface_board_interface.h"
 #include "usart1_buffer_interface.h"
+#include "usart.h"
+
+extern int pulse_pain;
+extern int localization;
+extern int wound_action;
 
 void interface_board_new_message_received_flag_set()
 {
@@ -25,8 +30,13 @@ void interface_board_object_init()
 
 void interface_board_action()
 {
-	if(interface_board_new_message_received_flag_get())
+	//if(interface_board_new_message_received_flag_get())
+	if(wound_action)
 	{
+		//debug debug debug
+		wound_action = 0;
+
+
 		interface_board_new_message_received_flag_reset();
 
 		usart1_buffer_get_message(input_message);
@@ -41,28 +51,137 @@ void interface_board_action()
 
 		unsigned int t, h, z, g, s;
 
-		if((input_message[0] == 't')&&(input_message[4] == 'h')&&(input_message[8] == 'z')&&(input_message[10] == 'g')&&(input_message[12] == 's'))
+		//if((input_message[0] == 't')&&(input_message[4] == 'h')&&(input_message[8] == 'z')&&(input_message[10] == 'g')&&(input_message[12] == 's'))
+		if(1)
 		{
 			sscanf(input_message, "t%3uh%3uz%1ug%1us%3u\r\n", &t, &h, &z, &g, &s);
+
+			char int_board_aux_message[128];
 
 			if(h == 0)
 			{
 				// отработка летального поражения
-			}
-			else
-			{
-				if(g == 0)
-				{
-					// отработка типа оружия, то есть, степени воздействия
-				}
 
-				if(z==0)
+			}
+
+			HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+			HAL_Delay(30);
+			HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+
+
+			//if(g == 0) // avtomat
+			if(1)
+			{
+				//if(z==0) // tors
+				if(1)
+				{
+					//e1c14k128l0200d05n0009p01000m001f0
+					sprintf(int_board_aux_message, "e1c%02dk0128l0200d05n0007p01000m001f0\r\n", localization);// levaya ruka pervichnyj
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					HAL_Delay(1000);
+					sprintf(int_board_aux_message, "e1c%02dk024l0200d05n2000p01000m001f0\r\n", localization);// levaya ruka vtorichnyj
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					//e1c14k024l0200d05n2000p01000m001f0
+
+					// debug debug debug
+					HAL_Delay(12000);
+					pulse_pain = 1;
+
+				}
+				else if(z==1) // golova
+				{
+					strcpy(int_board_aux_message, "e1c14k064l0200d05n0003p01000m001f0\r\n"); // slabenkiy
+					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+				}
+				else if(z==2) // ruki
+				{
+					//e1c00k128l0200d05n0009p01000m001f0
+					strcpy(int_board_aux_message, "e1c00k128l0200d05n0005p01000m001f0\r\n");// levaya ruka pervichnyj
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					HAL_Delay(300);
+					strcpy(int_board_aux_message, "e1c00k12l0200d05n2000p01000m001f0\r\n");// levaya ruka vtorichnyj
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					//e1c00k024l0200d05n2000p01000m001f0
+				}
+				else if(z==3) // nogi
+				{
+					//e1c08k128l0200d05n0010p01000m001f0
+					strcpy(int_board_aux_message, "e1c08k128l0200d05n0005p01000m001f0\r\n");// levaya noga pervichnyj
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					HAL_Delay(300);
+					strcpy(int_board_aux_message, "e1c08k14l0200d05n2000p01000m001f0\r\n");// levaya noga vtorichnyj
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					//e1c08k026l0200d05n2000p01000m001f0
+				}
+			}
+			else if(g == 1) // pistolet
+			{
+				if(z==0) // tors
+				{
+					//e1c14k128l0200d05n0003p01000m001f0
+					strcpy(int_board_aux_message, "e1c14k024l0200d05n0003p01000m001f0\r\n");
+					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					//e1c14k012l0200d05n2000p01000m001f0
+				}
+				else if(z==1) // golova
 				{
 					// отработка локализации поражения
 				}
-
-				// формирования управляющей строки для генератора
+				else if(z==2) // ruki
+				{
+					//e1c00k128l0200d05n0003p01000m001f0
+					strcpy(int_board_aux_message, "e1c00k024l0200d05n0003p01000m001f0\r\n");
+					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					//e1c00k012l0200d05n2000p01000m001f0
+				}
+				else if(z==3) // nogi
+				{
+					//e1c08k128l0200d05n0005p01000m001f0
+					strcpy(int_board_aux_message, "e1c08k024l0200d05n0005p01000m001f0\r\n");
+					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					//e1c08k014l0200d05n2000p01000m001f0
+				}
 			}
+			else if(g == 2) // vintovka
+			{
+				if(z==0) // tors
+				{
+					//e1c14k128l0200d05n0006p01000m001f0
+					strcpy(int_board_aux_message, "e1c14k024l0200d05n0006p01000m001f0\r\n");
+					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					//e1c14k018l0200d05n2000p01000m001f0
+				}
+				else if(z==1) // golova
+				{
+					// отработка локализации поражения
+				}
+				else if(z==2) // ruki
+				{
+					//e1c00k128l0200d05n0006p01000m001f0
+					strcpy(int_board_aux_message, "e1c00k024l0200d05n0006p01000m001f0\r\n");
+					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					//e1c00k018l0200d05n2000p01000m001f0
+				}
+				else if(z==3) // nogi
+				{
+					//e1c08k128l0200d05n0007p01000m001f0
+					strcpy(int_board_aux_message, "e1c08k024l0200d05n0007p01000m001f0\r\n");
+					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					//e1c08k020l0200d05n2000p01000m001f0
+				}
+			}
+
+			//HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+
+
+			// формирования управляющей строки для генератора
 		}
 
 

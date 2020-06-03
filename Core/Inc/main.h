@@ -43,6 +43,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define onboard_led_Pin GPIO_PIN_13
 #define onboard_led_GPIO_Port GPIOC
+#define sound_power_Pin GPIO_PIN_4
+#define sound_power_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

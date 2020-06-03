@@ -257,6 +257,10 @@ void USART2_IRQHandler(void)
 
 					if (vest_interface_condition == 0) //
 					{
+						// debug vest fake address init
+						strcpy(usart2_buffer, "+addr0080E1FD2CE9\r\n");
+						//strcpy(usart2_buffer, "+addr0080E1FD2CEC\r\n");
+
 						if(usart2_buffer[usart2_write_buffer][1]=='a' && usart2_buffer[usart2_write_buffer][2]=='d' && usart2_buffer[usart2_write_buffer][3]=='d' && usart2_buffer[usart2_write_buffer][4]=='r')
 						{
 							usart2_received_messages++;

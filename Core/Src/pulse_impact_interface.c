@@ -7,7 +7,7 @@
 
 void pulse_impact_object_init()
 {
-	pulse_pain_mode_flag = 1;
+	pulse_pain_mode_flag = 0;
 	pulse_pain_localization = 0;
 	pulse_impact_new_r_pick_detected_flag = 0;
 	r_pick_time_marker = 0;

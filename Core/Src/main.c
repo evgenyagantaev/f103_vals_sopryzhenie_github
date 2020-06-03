@@ -40,6 +40,10 @@ int usart2_processed_messages = 0;
 
 int vest_interface_condition = 0;   // ozhidanie adresa (0); adres poluchen (1)
 
+int pulse_pain = 0;
+int localization = 15;
+int wound_action = 0;
+
 int main(void)
 {
 
@@ -101,6 +105,48 @@ int main(void)
 
 	//usart2_buffer_obj_write_reset();
 	vest_new_message_received_flag_reset();
+
+	// debug *********************************************
+	//****************************************************
+	/*
+	char aux_message[32];
+	unsigned int r_pick_counter = 0;
+	uint32_t delay_counter;
+	while(1)
+	{
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+
+		delay_counter = 0;
+		while(delay_counter < 4250)
+		{
+			delay_counter++;
+		}
+
+		//sprintf(aux_message, "R -> %u", (unsigned int)r_pick_counter);
+		//ssd1306_SetCursor(0,0);
+		//ssd1306_WriteString("           ", Font_11x18, White);
+		//ssd1306_SetCursor(0,0);
+		//ssd1306_WriteString(aux_message, Font_11x18, White);
+		//ssd1306_UpdateScreen();
+
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+
+		delay_counter = 0;
+		while(delay_counter < 4250)
+		{
+			delay_counter++;
+		}
+
+		//sprintf(aux_message, "R -> %u", (unsigned int)r_pick_counter);
+		//ssd1306_SetCursor(0,0);
+		//ssd1306_WriteString("           ", Font_11x18, White);
+		//ssd1306_SetCursor(0,0);
+		//ssd1306_WriteString(aux_message, Font_11x18, White);
+		//ssd1306_UpdateScreen();
+	}
+	//*/
+	//****************************************************
+	// debug *********************************************
 
 	/* Infinite loop */
 	while (1)
@@ -177,7 +223,7 @@ int main(void)
 		//usart2_buffer_action();
 		interface_board_action();
 		vest_action();
-		pulse_impact_action();
+		//pulse_impact_action();
 	}
 
 }

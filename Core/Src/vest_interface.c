@@ -7,6 +7,10 @@
 #include "stdio.h"
 #include "usart.h"
 
+extern int pulse_pain;
+extern int localization;
+extern int wound_action;
+
 extern int vest_interface_condition;   // ozhidanie adresa (0); adres poluchen (1)
 
 void vest_new_message_received_flag_set()
@@ -120,6 +124,10 @@ void vest_action()
 			ssd1306_SetCursor(0,22);
 			ssd1306_WriteString(vest_address_string, Font_11x18, White);
 			ssd1306_UpdateScreen();
+
+			sprintf(aux_message, "address ok\r\n");
+			HAL_UART_Transmit(&huart2, (uint8_t *)aux_message, strlen(aux_message), 500);  // for production board
+
 			HAL_Delay(13000);
 
 			sprintf(aux_message, "AT+AB Bond %s 0000\r\n", vest_address_string);
@@ -145,6 +153,9 @@ void vest_action()
 
 			vest_interface_condition = 1;
 
+			//debug
+			wound_action = 1;
+
 		}
 		else
 		{
@@ -161,6 +172,23 @@ void vest_action()
 				ssd1306_SetCursor(0,0);
 				ssd1306_WriteString(aux_message, Font_11x18, White);
 				ssd1306_UpdateScreen();
+
+				if(pulse_pain)
+				{
+					//strcpy(aux_message, "v1c00n001l00200d00000\r\n");  // DEBUG VIBRA
+					sprintf(aux_message, "e1c%02dk024l0200d05n0005p01000m001f0\r\n", localization);
+					HAL_UART_Transmit(&huart3, (uint8_t *)aux_message, strlen(aux_message), 500);
+				}
+
+				/*
+				HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+				uint32_t delay_counter = 0;
+				while(delay_counter < 4250)
+				{
+					delay_counter++;
+				}
+				HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+				//*/
 			}
 			if((vest_message[0] == 'c') && (vest_message[1] == '1')) // new status string
 			{
