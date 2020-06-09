@@ -8,7 +8,21 @@
 #include "usart.h"
 
 extern int pulse_pain;
+//*************************
 extern int localization;
+//*************************
+extern int prim_k;
+extern int prim_l;
+extern int prim_n;
+//*************************
+extern int second_k;
+extern int second_l;
+extern int second_n;
+//*************************
+extern int puls_k;
+extern int puls_l;
+extern int puls_n;
+//*************************
 extern int wound_action;
 
 extern int vest_interface_condition;   // ozhidanie adresa (0); adres poluchen (1)
@@ -162,6 +176,10 @@ void vest_action()
 
 			if((vest_message[0] == 'R') && strlen(vest_message) == 3) // new R-marker
 			{
+				// heart beat
+				HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+
+
 				pulse_impact_new_r_pick_detected_flag_set();
 
 				r_pick_counter++;
@@ -173,10 +191,14 @@ void vest_action()
 				ssd1306_WriteString(aux_message, Font_11x18, White);
 				ssd1306_UpdateScreen();
 
+				// heart beat
+				HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+
+
 				if(pulse_pain)
 				{
 					//strcpy(aux_message, "v1c00n001l00200d00000\r\n");  // DEBUG VIBRA
-					sprintf(aux_message, "e1c%02dk024l0200d05n0005p01000m001f0\r\n", localization);
+					sprintf(aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f2\r\n", localization, puls_k, puls_l, puls_n);
 					HAL_UART_Transmit(&huart3, (uint8_t *)aux_message, strlen(aux_message), 500);
 				}
 

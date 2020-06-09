@@ -50,6 +50,7 @@ void MX_GPIO_Init(void)
 
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
 
 	/*Configure GPIO pin : PtPin */
 	GPIO_InitStruct.Pin = onboard_led_Pin;
@@ -60,11 +61,10 @@ void MX_GPIO_Init(void)
 
   	GPIO_InitStruct.Pin = sound_power_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(sound_power_GPIO_Port, &GPIO_InitStruct);
 
-	HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
 
 }
 

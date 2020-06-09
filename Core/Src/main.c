@@ -41,7 +41,23 @@ int usart2_processed_messages = 0;
 int vest_interface_condition = 0;   // ozhidanie adresa (0); adres poluchen (1)
 
 int pulse_pain = 0;
+
+//*************************
 int localization = 15;
+//*************************
+int prim_k = 128;
+int prim_l = 200;
+int prim_n = 3;
+//*************************
+int second_k = 8;
+int second_l = 200;
+int second_n = 2000;
+//*************************
+int puls_k = 8;
+int puls_l = 200;
+int puls_n = 11;
+//*************************
+
 int wound_action = 0;
 
 int main(void)

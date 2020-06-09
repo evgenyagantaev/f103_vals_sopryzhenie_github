@@ -4,7 +4,21 @@
 #include "usart.h"
 
 extern int pulse_pain;
+//*************************
 extern int localization;
+//*************************
+extern int prim_k;
+extern int prim_l;
+extern int prim_n;
+//*************************
+extern int second_k;
+extern int second_l;
+extern int second_n;
+//*************************
+extern int puls_k;
+extern int puls_l;
+extern int puls_n;
+//*************************
 extern int wound_action;
 
 void interface_board_new_message_received_flag_set()
@@ -64,9 +78,6 @@ void interface_board_action()
 
 			}
 
-			HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
-			HAL_Delay(30);
-			HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
 
 
 			//if(g == 0) // avtomat
@@ -75,11 +86,20 @@ void interface_board_action()
 				//if(z==0) // tors
 				if(1)
 				{
-					//e1c14k128l0200d05n0009p01000m001f0
-					sprintf(int_board_aux_message, "e1c%02dk0128l0200d05n0007p01000m001f0\r\n", localization);// levaya ruka pervichnyj
+					// sound
+					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+
+					sprintf(int_board_aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);// levaya ruka pervichnyj
 					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					HAL_Delay(1000);
-					sprintf(int_board_aux_message, "e1c%02dk024l0200d05n2000p01000m001f0\r\n", localization);// levaya ruka vtorichnyj
+
+					// sound
+					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+
+					HAL_Delay(500);
+					sprintf(int_board_aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f1\r\n", localization, second_k, second_l, 500);// levaya ruka vtorichnyj
+					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					HAL_Delay(2800);
+					sprintf(int_board_aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k, second_l, second_n);// levaya ruka vtorichnyj
 					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
 					//e1c14k024l0200d05n2000p01000m001f0
 
