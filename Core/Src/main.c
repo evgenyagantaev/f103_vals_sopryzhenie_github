@@ -102,6 +102,43 @@ int main(void)
 	MX_USART2_UART_Init();
 	MX_USART3_UART_Init();
 
+	// debug *********************************************
+	//*
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+	char message[64];
+	sprintf(message, "Hello\r\n");
+	message[0] = 0xaa; // sync word
+	message[1] = 0x00; // length high
+	message[2] = 0x02; // length low
+	//message[3] = 0x02; // command id (reset)
+	//message[3] = 0x03; // command id (read status)
+	message[3] = 0x07; // command id (read device name)
+	message[4] = (uint8_t)(message[1] + message[2] + message[3]); // check sum
+
+	while (1)
+	{
+
+		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_RESET);
+		HAL_Delay(3500);
+		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_SET);
+		HAL_Delay(3500);
+		HAL_UART_Transmit(&huart2, (uint8_t *)message, 5, 500);
+
+
+
+		/*
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+		//HAL_Delay(1);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+		//HAL_Delay(1);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
+		//HAL_Delay(1);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
+		//HAL_Delay(1);
+		*/
+	}
+	//*/
+
 	usart1_object_init();
 	//usart2_object_init();
 	interface_board_object_init();
@@ -162,7 +199,7 @@ int main(void)
 	}
 	//*/
 	//****************************************************
-	// debug *********************************************
+
 
 	/* Infinite loop */
 	while (1)
