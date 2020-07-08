@@ -13,6 +13,26 @@
 #include "vest_interface.h"
 #include "pulse_impact_interface.h"
 
+//#define EEPROM
+#ifdef EEPROM
+#define CONFIGURE_PA2_AS_INPUT
+#define CONFIGURE_WRITE_EEPROM
+#define DEBUG_STOP_WITH_BLINK
+#endif
+
+//#define PC_TEST_MODE
+#ifdef PC_TEST_MODE
+#define CONFIGURE_PA2_AS_INPUT
+#define CONFIGURE_NORMAL_JOB
+#define DEBUG_STOP_WITH_BLINK
+#endif
+
+#define NORMAL
+#ifdef NORMAL
+#define CONFIGURE_NORMAL_JOB
+#endif
+
+
 void SystemClock_Config(void);
 
 
@@ -62,6 +82,7 @@ int wound_action = 0;
 
 int main(void)
 {
+	int i = 0;
 
 	/* MCU Configuration--------------------------------------------------------*/
 
@@ -74,6 +95,14 @@ int main(void)
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
+
+	HAL_GPIO_WritePin(GPIOB, sw_btn_Pin, GPIO_PIN_SET);
+	HAL_Delay(100);
+
+
+	HAL_GPIO_WritePin(GPIOA, bt_reset, GPIO_PIN_RESET);  // bluetooth hard reset
+	HAL_GPIO_WritePin(GPIOB, sw_btn_Pin, GPIO_PIN_RESET);
+
 	MX_I2C1_Init();
 
 	//****************************************************************
@@ -103,18 +132,120 @@ int main(void)
 	MX_USART3_UART_Init();
 
 	// debug *********************************************
-	//*
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
-	char message[64];
-	sprintf(message, "Hello\r\n");
-	message[0] = 0xaa; // sync word
-	message[1] = 0x00; // length high
-	message[2] = 0x02; // length low
-	//message[3] = 0x02; // command id (reset)
-	//message[3] = 0x03; // command id (read status)
-	message[3] = 0x07; // command id (read device name)
-	message[4] = (uint8_t)(message[1] + message[2] + message[3]); // check sum
 
+	//HAL_GPIO_WritePin(GPIOB, p2_0_Pin, GPIO_PIN_SET);
+	//HAL_GPIO_WritePin(GPIOB, p2_4_Pin, GPIO_PIN_SET);
+	//HAL_GPIO_WritePin(GPIOB, ean_Pin, GPIO_PIN_RESET);  // 1 1 0 normal mode
+	HAL_GPIO_WritePin(GPIOA, bt_reset, GPIO_PIN_RESET);  // bluetooth hard reset
+	HAL_Delay(50);
+
+#ifdef CONFIGURE_PA2_AS_INPUT
+
+	// configure pa2 (usart2 tx) as input
+	 GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	GPIO_InitStruct.Pin = GPIO_PIN_2;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+#endif
+
+#ifdef CONFIGURE_WRITE_EEPROM
+	// configure write eeprom
+	HAL_GPIO_WritePin(GPIOB, p2_0_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB, p2_4_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOB, ean_Pin, GPIO_PIN_RESET);  // 0 0 1 write flash; 0 1 0 write eeprom; 1 1 0 normal
+#endif
+
+#ifdef CONFIGURE_NORMAL_JOB
+	// configure normal job
+	HAL_GPIO_WritePin(GPIOB, p2_0_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOB, p2_4_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOB, ean_Pin, GPIO_PIN_RESET);  // 0 0 1 write flash; 0 1 0 write eeprom; 1 1 0 normal
+#endif
+
+	HAL_Delay(50);
+	HAL_GPIO_WritePin(GPIOA, bt_reset, GPIO_PIN_SET);        // bluetooth power on reset
+	HAL_Delay(1000);
+
+#ifdef DEBUG_STOP_WITH_BLINK
+	// stop after bt mode configuration
+	while(1)
+	{
+		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_RESET);
+		HAL_Delay(100);
+		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_SET);
+		HAL_Delay(100);
+	}
+#endif
+
+	// prepare go to standby mode command
+	char message[64];
+	int16_t aux;
+	uint8_t check_sum;
+	uint16_t command_length;
+	uint8_t op_code;
+	uint8_t parameter;
+	int message_length;
+
+	command_length = 0x02;
+	message_length = command_length + 4;
+	op_code = 0x1c; // command id (visibility setting)
+	parameter = 0x01; // parameter (go to standby mode)
+	message[0] = 0xaa; // sync word
+	message[1] = (uint8_t)(command_length >> 8); // length high
+	message[2] = (uint8_t)command_length; // length low
+	message[3] = op_code; // command id
+	message[4] = parameter; // parameter (go to standby mode)
+	check_sum = 0;
+	for(i=0; i<(command_length + 2); i++)
+	{
+		check_sum = (uint8_t)(check_sum + message[1+i]);
+	}
+	aux = (int16_t)0x0000 - check_sum;
+	check_sum = (uint8_t)aux;
+	message[message_length - 1] = check_sum; // check sum
+	// send standby command
+	HAL_UART_Transmit(&huart2, (uint8_t *)message, message_length, 500);
+
+	HAL_Delay(2500);
+
+	// prepare read device name command
+	command_length = 0x01;
+	message_length = command_length + 4;
+	op_code = 0x07; // command id (read device name)
+	message[0] = 0xaa; // sync word
+	message[1] = (uint8_t)(command_length >> 8); // length high
+	message[2] = (uint8_t)command_length; // length low
+	message[3] = op_code; // command id
+	check_sum = 0;
+	for(i=0; i<(command_length + 2); i++)
+	{
+		check_sum = (uint8_t)(check_sum + message[1+i]);
+	}
+	aux = (int16_t)0x0000 - check_sum;
+	check_sum = (uint8_t)aux;
+	message[message_length - 1] = check_sum; // check sum
+
+	// prepare read all paired devices
+	command_length = 0x01;
+	message_length = command_length + 4;
+	op_code = 0x0c; // command id (read all paired devices)
+	message[0] = 0xaa; // sync word
+	message[1] = (uint8_t)(command_length >> 8); // length high
+	message[2] = (uint8_t)command_length; // length low
+	message[3] = op_code; // command id
+	check_sum = 0;
+	for(i=0; i<(command_length + 2); i++)
+	{
+		check_sum = (uint8_t)(check_sum + message[1+i]);
+	}
+	aux = (int16_t)0x0000 - check_sum;
+	check_sum = (uint8_t)aux;
+	message[message_length - 1] = check_sum; // check sum
+	HAL_UART_Transmit(&huart2, (uint8_t *)message, message_length, 500);
+
+	/*
 	while (1)
 	{
 
@@ -123,19 +254,6 @@ int main(void)
 		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_SET);
 		HAL_Delay(3500);
 		HAL_UART_Transmit(&huart2, (uint8_t *)message, 5, 500);
-
-
-
-		/*
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
-		//HAL_Delay(1);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
-		//HAL_Delay(1);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
-		//HAL_Delay(1);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
-		//HAL_Delay(1);
-		*/
 	}
 	//*/
 
@@ -249,7 +367,8 @@ int main(void)
 				ssd1306_WriteString(vest_aux_message, Font_11x18, White);
 				ssd1306_UpdateScreen();
 
-				vest_receive_address(&(vest_aux_message[5]));
+				int offset = 5;
+				vest_receive_address(&(vest_aux_message[5+offset]));
 				vest_new_message_received_flag_set();
 			}
 			else

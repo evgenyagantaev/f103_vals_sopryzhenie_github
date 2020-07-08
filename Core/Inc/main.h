@@ -45,6 +45,11 @@ void Error_Handler(void);
 #define onboard_led_GPIO_Port GPIOC
 #define sound_power_Pin GPIO_PIN_4
 #define sound_power_GPIO_Port GPIOA
+#define sw_btn_Pin GPIO_PIN_2
+#define p2_0_Pin GPIO_PIN_3
+#define p2_4_Pin GPIO_PIN_5
+#define ean_Pin GPIO_PIN_8
+#define bt_reset GPIO_PIN_8
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

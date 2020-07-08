@@ -89,7 +89,7 @@ void vest_receive_address(char *address_string)
 
 	for(i=0; i<12; i++)
 		vest_address_string[i] = address_string[i];
-	aux_message[12] = 0;
+	vest_address_string[12] = 0;
 
 }
 
@@ -130,8 +130,6 @@ void vest_action()
 		if(vest_interface_condition == 0)   // vest address is not received yet
 		{
 
-			//strncpy(&(vest_message[13]), aux_message, 12);
-			//aux_message[12] = 0;
 
 			ssd1306_SetCursor(0,0);
 			ssd1306_WriteString("vest       ", Font_11x18, White);

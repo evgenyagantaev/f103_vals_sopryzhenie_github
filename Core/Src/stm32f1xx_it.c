@@ -248,6 +248,10 @@ void USART2_IRQHandler(void)
 		if (((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
 		{
 			usart_data = (uint16_t) USART2->DR;
+
+			if((uint8_t)usart_data == 0xaa)
+				usart2_write_index = 0;
+
 			usart2_buffer[usart2_write_buffer][usart2_write_index] = (char)usart_data;
 			usart2_write_index++;
 			if((char)usart_data == '\n') // new full message received
@@ -258,10 +262,13 @@ void USART2_IRQHandler(void)
 					if (vest_interface_condition == 0) //
 					{
 						// debug vest fake address init
-						strcpy(usart2_buffer, "+addr0080E1FD2CE9\r\n");
+						//strcpy(usart2_buffer, "+addr0080E1FD2CE9\r\n");
 						//strcpy(usart2_buffer, "+addr0080E1FD2CEC\r\n");
 
-						if(usart2_buffer[usart2_write_buffer][1]=='a' && usart2_buffer[usart2_write_buffer][2]=='d' && usart2_buffer[usart2_write_buffer][3]=='d' && usart2_buffer[usart2_write_buffer][4]=='r')
+						//debug
+						int offset = 5;
+
+						if(usart2_buffer[usart2_write_buffer][1 + offset]=='a' && usart2_buffer[usart2_write_buffer][2 + offset]=='d' && usart2_buffer[usart2_write_buffer][3 + offset]=='d' && usart2_buffer[usart2_write_buffer][4 + offset]=='r')
 						{
 							usart2_received_messages++;
 
