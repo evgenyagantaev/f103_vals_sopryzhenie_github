@@ -396,6 +396,7 @@ int main(void)
 		interface_board_action();
 		vest_action();
 		//pulse_impact_action();
+		power_button_action();
 	}
 
 }

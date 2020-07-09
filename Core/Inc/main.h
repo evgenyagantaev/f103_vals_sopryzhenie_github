@@ -50,6 +50,8 @@ void Error_Handler(void);
 #define p2_4_Pin GPIO_PIN_5
 #define ean_Pin GPIO_PIN_8
 #define bt_reset GPIO_PIN_8
+#define power_button_pin GPIO_PIN_11
+#define power_control_pin GPIO_PIN_12
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
