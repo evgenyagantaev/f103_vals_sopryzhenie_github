@@ -3,6 +3,11 @@
 #include "usart1_buffer_interface.h"
 #include "usart.h"
 
+#include "power_button_interface.h"
+
+#include "ssd1306.h"
+#include "stdio.h"
+
 extern int pulse_pain;
 //*************************
 extern int localization;
@@ -86,6 +91,40 @@ void interface_board_action()
 				//if(z==0) // tors
 				if(1)
 				{
+					// debug debug****************************
+					/*
+					ssd1306_Fill(Black);
+					int counter = 0;
+					while(1)
+					{
+						sprintf(int_board_aux_message, "hello %3d  ", counter);
+						ssd1306_SetCursor(0,0);
+						ssd1306_WriteString(int_board_aux_message, Font_11x18, White);
+						ssd1306_UpdateScreen();
+
+						sprintf(int_board_aux_message, "hello %3d\r\n", counter);
+						HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+
+
+						counter++;
+
+						power_button_action();
+
+						HAL_Delay(2000);
+
+					}
+					//*/
+					//*****************************************
+
+
+					// debug delay*****************************
+					//HAL_Delay(3000);
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("SHOCK", Font_16x26, White);
+					ssd1306_UpdateScreen();
+					// debug delay*****************************
+
+
 					// sound
 					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
 

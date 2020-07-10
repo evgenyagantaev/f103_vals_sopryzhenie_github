@@ -249,9 +249,6 @@ void USART2_IRQHandler(void)
 		{
 			usart_data = (uint16_t) USART2->DR;
 
-			if((uint8_t)usart_data == 0xaa)
-				usart2_write_index = 0;
-
 			usart2_buffer[usart2_write_buffer][usart2_write_index] = (char)usart_data;
 			usart2_write_index++;
 			if((char)usart_data == '\n') // new full message received
@@ -259,63 +256,25 @@ void USART2_IRQHandler(void)
 				if(usart2_write_index > 1)
 				{
 
-					if (vest_interface_condition == 0) //
+					usart2_received_messages++;
+
+					if(usart2_old_message_saved)
 					{
-						// debug vest fake address init
-						//strcpy(usart2_buffer, "+addr0080E1FD2CE9\r\n");
-						//strcpy(usart2_buffer, "+addr0080E1FD2CEC\r\n");
-
-						//debug
-						int offset = 5;
-
-						if(usart2_buffer[usart2_write_buffer][1 + offset]=='a' && usart2_buffer[usart2_write_buffer][2 + offset]=='d' && usart2_buffer[usart2_write_buffer][3 + offset]=='d' && usart2_buffer[usart2_write_buffer][4 + offset]=='r')
-						{
-							usart2_received_messages++;
-
-							if(usart2_old_message_saved)
-							{
-								usart2_buffer[usart2_write_buffer][usart2_write_index] = 0;
-								usart2_message_length = usart2_write_index;
-								usart2_write_index = 0;
-								usart2_write_buffer = (usart2_write_buffer + 1) % 2;
-								usart2_read_buffer = (usart2_read_buffer + 1) % 2;
-								usart2_new_message_ready_flag = 1;
-							}
-							else
-							{
-								usart2_write_index = 0;
-								usart2_message_lost = 1;
-							}
-						}
-						else
-							usart2_write_index = 0;
+						usart2_buffer[usart2_write_buffer][usart2_write_index] = 0;
+						usart2_message_length = usart2_write_index;
+						usart2_write_index = 0;
+						usart2_write_buffer = (usart2_write_buffer + 1) % 2;
+						usart2_read_buffer = (usart2_read_buffer + 1) % 2;
+						usart2_new_message_ready_flag = 1;
 					}
 					else
 					{
-						//if(usart2_buffer[usart2_write_buffer][0]=='R')
-						{
-							usart2_received_messages++;
-
-							if(usart2_old_message_saved)
-							{
-								usart2_buffer[usart2_write_buffer][usart2_write_index] = 0;
-								usart2_message_length = usart2_write_index;
-								usart2_write_index = 0;
-								usart2_write_buffer = (usart2_write_buffer + 1) % 2;
-								usart2_read_buffer = (usart2_read_buffer + 1) % 2;
-								usart2_new_message_ready_flag = 1;
-							}
-							else
-							{
-								usart2_write_index = 0;
-								usart2_message_lost = 1;
-							}
-						}
-						//else
-							//usart2_write_index = 0;
+						usart2_write_index = 0;
+						usart2_message_lost = 1;
 					}
 				}
-
+				else
+					usart2_write_index = 0;
 
 			}
 			else
@@ -323,8 +282,8 @@ void USART2_IRQHandler(void)
 				if(usart2_write_index >= USART2_BUFFER_LENGTH) // buffer overflow
 					usart2_write_index = 0;
 			}
-
 		}
+
 	}
 	else // some errors
 	{

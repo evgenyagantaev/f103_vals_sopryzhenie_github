@@ -12,6 +12,7 @@
 #include "interface_board_interface.h"
 #include "vest_interface.h"
 #include "pulse_impact_interface.h"
+#include "power_button_interface.h"
 
 //#define EEPROM
 #ifdef EEPROM
@@ -58,16 +59,14 @@ int usart2_message_lost = 0;
 int usart2_received_messages = 0;
 int usart2_processed_messages = 0;
 
-int vest_interface_condition = 0;   // ozhidanie adresa (0); adres poluchen (1)
-
 int pulse_pain = 0;
 
 //*************************
-int localization = 15;
+int localization = 8;
 //*************************
-int prim_k = 128;
+int prim_k = 32;
 int prim_l = 200;
-int prim_n = 3;
+int prim_n = 5;
 //*************************
 int second_k = 8;
 int second_l = 200;
@@ -78,11 +77,10 @@ int puls_l = 200;
 int puls_n = 11;
 //*************************
 
-int wound_action = 0;
+int wound_action = 1;
 
 int main(void)
 {
-	int i = 0;
 
 	/* MCU Configuration--------------------------------------------------------*/
 
@@ -179,84 +177,6 @@ int main(void)
 	}
 #endif
 
-	// prepare go to standby mode command
-	char message[64];
-	int16_t aux;
-	uint8_t check_sum;
-	uint16_t command_length;
-	uint8_t op_code;
-	uint8_t parameter;
-	int message_length;
-
-	command_length = 0x02;
-	message_length = command_length + 4;
-	op_code = 0x1c; // command id (visibility setting)
-	parameter = 0x01; // parameter (go to standby mode)
-	message[0] = 0xaa; // sync word
-	message[1] = (uint8_t)(command_length >> 8); // length high
-	message[2] = (uint8_t)command_length; // length low
-	message[3] = op_code; // command id
-	message[4] = parameter; // parameter (go to standby mode)
-	check_sum = 0;
-	for(i=0; i<(command_length + 2); i++)
-	{
-		check_sum = (uint8_t)(check_sum + message[1+i]);
-	}
-	aux = (int16_t)0x0000 - check_sum;
-	check_sum = (uint8_t)aux;
-	message[message_length - 1] = check_sum; // check sum
-	// send standby command
-	HAL_UART_Transmit(&huart2, (uint8_t *)message, message_length, 500);
-
-	HAL_Delay(2500);
-
-	// prepare read device name command
-	command_length = 0x01;
-	message_length = command_length + 4;
-	op_code = 0x07; // command id (read device name)
-	message[0] = 0xaa; // sync word
-	message[1] = (uint8_t)(command_length >> 8); // length high
-	message[2] = (uint8_t)command_length; // length low
-	message[3] = op_code; // command id
-	check_sum = 0;
-	for(i=0; i<(command_length + 2); i++)
-	{
-		check_sum = (uint8_t)(check_sum + message[1+i]);
-	}
-	aux = (int16_t)0x0000 - check_sum;
-	check_sum = (uint8_t)aux;
-	message[message_length - 1] = check_sum; // check sum
-
-	// prepare read all paired devices
-	command_length = 0x01;
-	message_length = command_length + 4;
-	op_code = 0x0c; // command id (read all paired devices)
-	message[0] = 0xaa; // sync word
-	message[1] = (uint8_t)(command_length >> 8); // length high
-	message[2] = (uint8_t)command_length; // length low
-	message[3] = op_code; // command id
-	check_sum = 0;
-	for(i=0; i<(command_length + 2); i++)
-	{
-		check_sum = (uint8_t)(check_sum + message[1+i]);
-	}
-	aux = (int16_t)0x0000 - check_sum;
-	check_sum = (uint8_t)aux;
-	message[message_length - 1] = check_sum; // check sum
-	HAL_UART_Transmit(&huart2, (uint8_t *)message, message_length, 500);
-
-	/*
-	while (1)
-	{
-
-		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_RESET);
-		HAL_Delay(3500);
-		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_SET);
-		HAL_Delay(3500);
-		HAL_UART_Transmit(&huart2, (uint8_t *)message, 5, 500);
-	}
-	//*/
-
 	usart1_object_init();
 	//usart2_object_init();
 	interface_board_object_init();
@@ -277,118 +197,29 @@ int main(void)
 	//usart2_buffer_obj_write_reset();
 	vest_new_message_received_flag_reset();
 
-	// debug *********************************************
-	//****************************************************
-	/*
-	char aux_message[32];
-	unsigned int r_pick_counter = 0;
-	uint32_t delay_counter;
-	while(1)
-	{
-		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
-
-		delay_counter = 0;
-		while(delay_counter < 4250)
-		{
-			delay_counter++;
-		}
-
-		//sprintf(aux_message, "R -> %u", (unsigned int)r_pick_counter);
-		//ssd1306_SetCursor(0,0);
-		//ssd1306_WriteString("           ", Font_11x18, White);
-		//ssd1306_SetCursor(0,0);
-		//ssd1306_WriteString(aux_message, Font_11x18, White);
-		//ssd1306_UpdateScreen();
-
-		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
-
-		delay_counter = 0;
-		while(delay_counter < 4250)
-		{
-			delay_counter++;
-		}
-
-		//sprintf(aux_message, "R -> %u", (unsigned int)r_pick_counter);
-		//ssd1306_SetCursor(0,0);
-		//ssd1306_WriteString("           ", Font_11x18, White);
-		//ssd1306_SetCursor(0,0);
-		//ssd1306_WriteString(aux_message, Font_11x18, White);
-		//ssd1306_UpdateScreen();
-	}
-	//*/
-	//****************************************************
-
 
 	/* Infinite loop */
 	while (1)
 	{
-		/*
-		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_RESET);
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(onboard_led_GPIO_Port, onboard_led_Pin, GPIO_PIN_SET);
-		HAL_Delay(500);
-		//*/
-
-		/*
-		counter++;
-		sprintf(message, "%d", counter);
-		ssd1306_SetCursor(0,30);
-		ssd1306_WriteString("           ", Font_11x18, White);
-		ssd1306_SetCursor(0,30);
-		ssd1306_WriteString(message, Font_11x18, White);
-		ssd1306_UpdateScreen();
-		//*/
 
 		if(usart2_new_message_ready_flag)
 		{
 
-			if (vest_interface_condition == 0)
-			{
-				char vest_aux_message[64];
+			char vest_aux_message[128];
 
-				usart2_new_message_ready_flag = 0;
-				usart2_processed_messages++;
+			usart2_new_message_ready_flag = 0;
+			usart2_processed_messages++;
 
-				// copy message
-				usart2_old_message_saved = 0;
-				int i;
-				for(i=0; (i<=usart2_message_length)&&(i<64); i++)
-					vest_aux_message[i] = usart2_buffer[usart2_read_buffer][i];
-				usart2_old_message_saved = 1;
+			// copy message
+			usart2_old_message_saved = 0;
+			int i;
+			for(i=0; i<=usart2_message_length; i++)
+				vest_aux_message[i] = usart2_buffer[usart2_read_buffer][i];
+			usart2_old_message_saved = 1;
 
 
-				// debug
-				//vest_aux_message[usart2_message_length-2] = 0;
-				//vest_aux_message[11] = 0;
-
-				ssd1306_SetCursor(0,44);
-				ssd1306_WriteString("           ", Font_11x18, White);
-				ssd1306_SetCursor(0,44);
-				ssd1306_WriteString(vest_aux_message, Font_11x18, White);
-				ssd1306_UpdateScreen();
-
-				int offset = 5;
-				vest_receive_address(&(vest_aux_message[5+offset]));
-				vest_new_message_received_flag_set();
-			}
-			else
-			{
-				char vest_aux_message[128];
-
-				usart2_new_message_ready_flag = 0;
-				usart2_processed_messages++;
-
-				// copy message
-				usart2_old_message_saved = 0;
-				int i;
-				for(i=0; i<=usart2_message_length; i++)
-					vest_aux_message[i] = usart2_buffer[usart2_read_buffer][i];
-				usart2_old_message_saved = 1;
-
-
-				vest_receive_message(vest_aux_message);
-				vest_new_message_received_flag_set();
-			}
+			vest_receive_message(vest_aux_message);
+			vest_new_message_received_flag_set();
 		}
 
 		usart1_buffer_action();
