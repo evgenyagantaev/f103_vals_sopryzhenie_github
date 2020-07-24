@@ -46,11 +46,38 @@ void interface_board_object_init()
 	interface_board_new_message_received_flag_reset();
 }
 
+void impact(int localization, int prim_k, int prim_l, int prim_n, int second_k, int second_l, int second_n)
+{
+	char local_message[128];
+
+	// sound
+	HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+	HAL_Delay(1);
+	HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+
+	sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);// levaya ruka pervichnyj
+	HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+
+
+
+	HAL_Delay(500);
+	sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f1\r\n", localization, second_k, second_l, 500);// levaya ruka vtorichnyj
+	HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+	HAL_Delay(2800);
+	sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k, second_l, second_n);// levaya ruka vtorichnyj
+	HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+	//e1c14k024l0200d05n2000p01000m001f0
+
+	// debug debug debug
+	HAL_Delay(12000);
+	pulse_pain = 1;
+}
+
 
 void interface_board_action()
 {
-	//if(interface_board_new_message_received_flag_get())
-	if(wound_action)
+	if(interface_board_new_message_received_flag_get())
+	//if(wound_action)
 	{
 		//debug debug debug
 		wound_action = 0;
@@ -68,10 +95,12 @@ void interface_board_action()
 		//  g - тип оружия, из которого стреляли (0 - автомат, 1 - пистолет, 2 - винтовка, 3 - другое);
 		//  s - идентификатор стрелявшего бойца (формат такой же как и для идентификатора бойца в поле "t").
 
+		// novaya tablica
+		// 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+
 		unsigned int t, h, z, g, s;
 
-		//if((input_message[0] == 't')&&(input_message[4] == 'h')&&(input_message[8] == 'z')&&(input_message[10] == 'g')&&(input_message[12] == 's'))
-		if(1)
+		if((input_message[0] == 't')&&(input_message[4] == 'h')&&(input_message[8] == 'z')&&(input_message[10] == 'g')&&(input_message[12] == 's'))
 		{
 			sscanf(input_message, "t%3uh%3uz%1ug%1us%3u\r\n", &t, &h, &z, &g, &s);
 
@@ -85,93 +114,38 @@ void interface_board_action()
 
 
 
-			//if(g == 0) // avtomat
-			if(1)
+			if(g == 0) // avtomat
 			{
-				//if(z==0) // tors
-				if(1)
+				if(z==0) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					// debug debug****************************
-					/*
-					ssd1306_Fill(Black);
-					int counter = 0;
-					while(1)
-					{
-						sprintf(int_board_aux_message, "hello %3d  ", counter);
-						ssd1306_SetCursor(0,0);
-						ssd1306_WriteString(int_board_aux_message, Font_11x18, White);
-						ssd1306_UpdateScreen();
-
-						sprintf(int_board_aux_message, "hello %3d\r\n", counter);
-						HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-
-
-						counter++;
-
-						power_button_action();
-
-						HAL_Delay(2000);
-
-					}
-					//*/
-					//*****************************************
-
-
-					// debug delay*****************************
-					//HAL_Delay(3000);
-					ssd1306_SetCursor(0,0);
-					ssd1306_WriteString("SHOCK", Font_16x26, White);
-					ssd1306_UpdateScreen();
-					// debug delay*****************************
-
-
+					impact(15,     8, 200, 5,     8, 200, 2000);
+				}
+				else if(z==1) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+				{
 					// sound
 					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
-
-					sprintf(int_board_aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);// levaya ruka pervichnyj
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-
-					// sound
+					HAL_Delay(1);
 					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
-
-					HAL_Delay(500);
-					sprintf(int_board_aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f1\r\n", localization, second_k, second_l, 500);// levaya ruka vtorichnyj
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					HAL_Delay(2800);
-					sprintf(int_board_aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k, second_l, second_n);// levaya ruka vtorichnyj
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					//e1c14k024l0200d05n2000p01000m001f0
-
-					// debug debug debug
-					HAL_Delay(12000);
-					pulse_pain = 1;
-
 				}
-				else if(z==1) // golova
+				else if(z==2) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					strcpy(int_board_aux_message, "e1c14k064l0200d05n0003p01000m001f0\r\n"); // slabenkiy
-					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
+					impact(1,     8, 200, 5,     8, 200, 2000);
 				}
-				else if(z==2) // ruki
+				else if(z==3) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					//e1c00k128l0200d05n0009p01000m001f0
-					strcpy(int_board_aux_message, "e1c00k128l0200d05n0005p01000m001f0\r\n");// levaya ruka pervichnyj
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					HAL_Delay(300);
-					strcpy(int_board_aux_message, "e1c00k12l0200d05n2000p01000m001f0\r\n");// levaya ruka vtorichnyj
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					//e1c00k024l0200d05n2000p01000m001f0
+					impact(9,     8, 200, 5,     8, 200, 2000);
 				}
-				else if(z==3) // nogi
+				else if(z==4) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					//e1c08k128l0200d05n0010p01000m001f0
-					strcpy(int_board_aux_message, "e1c08k128l0200d05n0005p01000m001f0\r\n");// levaya noga pervichnyj
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					HAL_Delay(300);
-					strcpy(int_board_aux_message, "e1c08k14l0200d05n2000p01000m001f0\r\n");// levaya noga vtorichnyj
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					//e1c08k026l0200d05n2000p01000m001f0
+					impact(14,     8, 200, 5,     8, 200, 2000);
+				}
+				else if(z==5) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+				{
+					impact(0,     8, 200, 5,     8, 200, 2000);
+				}
+				else if(z==6) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+				{
+					impact(8,     8, 200, 5,     8, 200, 2000);
 				}
 			}
 			else if(g == 1) // pistolet

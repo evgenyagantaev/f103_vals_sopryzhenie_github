@@ -21,6 +21,13 @@
 #define DEBUG_STOP_WITH_BLINK
 #endif
 
+//#define REFLASH
+#ifdef REFLASH
+#define CONFIGURE_PA2_AS_INPUT
+#define CONFIGURE_WRITE_FLASH
+#define DEBUG_STOP_WITH_BLINK
+#endif
+
 //#define PC_TEST_MODE
 #ifdef PC_TEST_MODE
 #define CONFIGURE_PA2_AS_INPUT
@@ -62,7 +69,7 @@ int usart2_processed_messages = 0;
 int pulse_pain = 0;
 
 //*************************
-int localization = 8;
+int localization = 8;		// 0-levaya ruka, 1-pravaya ruka, 8-levaya noga, 9-pravaya noga, 14-zhivot, 15-poyasnica
 //*************************
 int prim_k = 32;
 int prim_l = 200;
@@ -74,7 +81,7 @@ int second_n = 2000;
 //*************************
 int puls_k = 8;
 int puls_l = 200;
-int puls_n = 11;
+int puls_n = 13;
 //*************************
 
 int wound_action = 1;
@@ -155,6 +162,14 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOB, ean_Pin, GPIO_PIN_RESET);  // 0 0 1 write flash; 0 1 0 write eeprom; 1 1 0 normal
 #endif
 
+#ifdef CONFIGURE_WRITE_FLASH
+	// configure write flash
+	HAL_GPIO_WritePin(GPIOB, p2_0_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB, p2_4_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB, ean_Pin, GPIO_PIN_SET);  // 0 0 1 write flash; 0 1 0 write eeprom; 1 1 0 normal
+#endif
+
+
 #ifdef CONFIGURE_NORMAL_JOB
 	// configure normal job
 	HAL_GPIO_WritePin(GPIOB, p2_0_Pin, GPIO_PIN_SET);
@@ -196,6 +211,18 @@ int main(void)
 
 	//usart2_buffer_obj_write_reset();
 	vest_new_message_received_flag_reset();
+
+	// DEBUG
+	/*
+	while(1)
+	{
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+		HAL_Delay(2000);
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+		HAL_Delay(2000);
+	}
+	//*/
+	// DEBUG
 
 
 	/* Infinite loop */

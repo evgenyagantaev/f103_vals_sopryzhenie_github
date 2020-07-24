@@ -115,6 +115,8 @@ void vest_action()
 		{
 			// heart beat
 			HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+			HAL_Delay(1);
+			HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
 
 
 			pulse_impact_new_r_pick_detected_flag_set();
@@ -128,12 +130,18 @@ void vest_action()
 			ssd1306_WriteString(aux_message, Font_11x18, White);
 			ssd1306_UpdateScreen();
 
-			// heart beat
-			HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
 
 
 			if(pulse_pain)
 			{
+				//*************************
+				int localization = 15;
+				//*************************
+				int puls_k = 8;
+				int puls_l = 200;
+				int puls_n = 13;
+				//*************************
+
 				//strcpy(aux_message, "v1c00n001l00200d00000\r\n");  // DEBUG VIBRA
 				sprintf(aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f2\r\n", localization, puls_k, puls_l, puls_n);
 				HAL_UART_Transmit(&huart3, (uint8_t *)aux_message, strlen(aux_message), 500);
