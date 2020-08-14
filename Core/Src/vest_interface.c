@@ -113,38 +113,39 @@ void vest_action()
 
 		if((vest_message[0] == 'R') && strlen(vest_message) == 3) // new R-marker
 		{
-			// heart beat
-			HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
-			HAL_Delay(1);
-			HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
-
 
 			pulse_impact_new_r_pick_detected_flag_set();
 
 			r_pick_counter++;
 
+			/*
 			sprintf(aux_message, "R -> %u", (unsigned int)r_pick_counter);
 			ssd1306_SetCursor(0,0);
 			ssd1306_WriteString("           ", Font_11x18, White);
 			ssd1306_SetCursor(0,0);
 			ssd1306_WriteString(aux_message, Font_11x18, White);
 			ssd1306_UpdateScreen();
+			//*/
 
 
 
 			if(pulse_pain)
 			{
-				//*************************
-				int localization = 15;
-				//*************************
-				int puls_k = 8;
-				int puls_l = 200;
-				int puls_n = 13;
-				//*************************
 
-				//strcpy(aux_message, "v1c00n001l00200d00000\r\n");  // DEBUG VIBRA
-				sprintf(aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f2\r\n", localization, puls_k, puls_l, puls_n);
-				HAL_UART_Transmit(&huart3, (uint8_t *)aux_message, strlen(aux_message), 500);
+				// heart beat
+				HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+				HAL_Delay(2);
+				HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+				HAL_Delay(2);
+				HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+				HAL_Delay(4);
+				HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+
+				if(localization != -1)
+				{
+					sprintf(aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f2\r\n", localization, puls_k, puls_l, puls_n);
+					HAL_UART_Transmit(&huart3, (uint8_t *)aux_message, strlen(aux_message), 500);
+				}
 			}
 
 			/*
@@ -168,12 +169,14 @@ void vest_action()
 			aux = (int)vest_message[5] - 48;
 			heart_rate += aux;
 
+			/*
 			sprintf(aux_message, "H -> %u", (unsigned int)heart_rate);
 			ssd1306_SetCursor(0,22);
 			ssd1306_WriteString("           ", Font_11x18, White);
 			ssd1306_SetCursor(0,22);
 			ssd1306_WriteString(aux_message, Font_11x18, White);
 			ssd1306_UpdateScreen();
+			//*/
 		}
 
 

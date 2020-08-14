@@ -2,6 +2,8 @@
 #include "interface_board_interface.h"
 #include "usart1_buffer_interface.h"
 #include "usart.h"
+#include "gpio.h"
+#include "math.h"
 
 #include "power_button_interface.h"
 
@@ -25,6 +27,9 @@ extern int puls_l;
 extern int puls_n;
 //*************************
 extern int wound_action;
+extern int stop_previous_impact;
+extern int impact_automat_state;
+
 
 void interface_board_new_message_received_flag_set()
 {
@@ -46,41 +51,31 @@ void interface_board_object_init()
 	interface_board_new_message_received_flag_reset();
 }
 
-void impact(int localization, int prim_k, int prim_l, int prim_n, int second_k, int second_l, int second_n)
-{
-	char local_message[128];
-
-	// sound
-	HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
-	HAL_Delay(1);
-	HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
-
-	sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);// levaya ruka pervichnyj
-	HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
-
-
-
-	HAL_Delay(500);
-	sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f1\r\n", localization, second_k, second_l, 500);// levaya ruka vtorichnyj
-	HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
-	HAL_Delay(2800);
-	sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k, second_l, second_n);// levaya ruka vtorichnyj
-	HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
-	//e1c14k024l0200d05n2000p01000m001f0
-
-	// debug debug debug
-	HAL_Delay(12000);
-	pulse_pain = 1;
-}
-
 
 void interface_board_action()
 {
-	if(interface_board_new_message_received_flag_get())
-	//if(wound_action)
+
+	// DEBUG ************************************************************************
+	/*
+	while(1)
 	{
-		//debug debug debug
-		wound_action = 0;
+
+		if((GPIOB->IDR & GPIO_PIN_11) != (uint32_t)GPIO_PIN_RESET) // high level, ready state
+		{
+			char local_message[128];
+
+			sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", 15, 8, 200, 5);
+			HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+
+			HAL_Delay(1);
+		}
+	}
+	//*/
+	// DEBUG ************************************************************************
+
+
+	if(interface_board_new_message_received_flag_get())
+	{
 
 
 		interface_board_new_message_received_flag_reset();
@@ -104,7 +99,6 @@ void interface_board_action()
 		{
 			sscanf(input_message, "t%3uh%3uz%1ug%1us%3u\r\n", &t, &h, &z, &g, &s);
 
-			char int_board_aux_message[128];
 
 			if(h == 0)
 			{
@@ -112,16 +106,17 @@ void interface_board_action()
 
 			}
 
-
+			pulse_pain = 0;
 
 			if(g == 0) // avtomat
 			{
 				if(z==0) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					impact(15,     8, 200, 5,     8, 200, 2000);
+					localization = 15;
 				}
 				else if(z==1) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
+					localization = -1;
 					// sound
 					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
 					HAL_Delay(1);
@@ -129,95 +124,200 @@ void interface_board_action()
 				}
 				else if(z==2) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					impact(1,     8, 200, 5,     8, 200, 2000);
+					localization = 1;
 				}
 				else if(z==3) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					impact(9,     8, 200, 5,     8, 200, 2000);
+					localization = 9;
 				}
 				else if(z==4) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					impact(14,     8, 200, 5,     8, 200, 2000);
+					localization = 14;
 				}
 				else if(z==5) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					impact(0,     8, 200, 5,     8, 200, 2000);
+					localization = 0;
 				}
 				else if(z==6) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					impact(8,     8, 200, 5,     8, 200, 2000);
+					localization = 8;
 				}
 			}
 			else if(g == 1) // pistolet
 			{
-				if(z==0) // tors
+				if(z==0) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					//e1c14k128l0200d05n0003p01000m001f0
-					strcpy(int_board_aux_message, "e1c14k024l0200d05n0003p01000m001f0\r\n");
-					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					//e1c14k012l0200d05n2000p01000m001f0
+					localization = 15;
 				}
-				else if(z==1) // golova
+				else if(z==1) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					// отработка локализации поражения
+					localization = -1;
+					// sound
+					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+					HAL_Delay(1);
+					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
 				}
-				else if(z==2) // ruki
+				else if(z==2) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					//e1c00k128l0200d05n0003p01000m001f0
-					strcpy(int_board_aux_message, "e1c00k024l0200d05n0003p01000m001f0\r\n");
-					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					//e1c00k012l0200d05n2000p01000m001f0
+					localization = 1;
 				}
-				else if(z==3) // nogi
+				else if(z==3) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					//e1c08k128l0200d05n0005p01000m001f0
-					strcpy(int_board_aux_message, "e1c08k024l0200d05n0005p01000m001f0\r\n");
-					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					//e1c08k014l0200d05n2000p01000m001f0
+					localization = 9;
+				}
+				else if(z==4) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+				{
+					localization = 14;
+				}
+				else if(z==5) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+				{
+					localization = 0;
+				}
+				else if(z==6) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+				{
+					localization = 8;
 				}
 			}
 			else if(g == 2) // vintovka
 			{
-				if(z==0) // tors
+				if(z==0) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					//e1c14k128l0200d05n0006p01000m001f0
-					strcpy(int_board_aux_message, "e1c14k024l0200d05n0006p01000m001f0\r\n");
-					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					//e1c14k018l0200d05n2000p01000m001f0
+					localization = 15;
 				}
-				else if(z==1) // golova
+				else if(z==1) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					// отработка локализации поражения
+					localization = -1;
+					// sound
+					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+					HAL_Delay(2);
+					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
 				}
-				else if(z==2) // ruki
+				else if(z==2) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					//e1c00k128l0200d05n0006p01000m001f0
-					strcpy(int_board_aux_message, "e1c00k024l0200d05n0006p01000m001f0\r\n");
-					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					//e1c00k018l0200d05n2000p01000m001f0
+					localization = 1;
 				}
-				else if(z==3) // nogi
+				else if(z==3) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
-					//e1c08k128l0200d05n0007p01000m001f0
-					strcpy(int_board_aux_message, "e1c08k024l0200d05n0007p01000m001f0\r\n");
-					//strcpy(int_board_aux_message, "v1c00n001l10000d01000\r\n");  // DEBUG VIBRA
-					HAL_UART_Transmit(&huart3, (uint8_t *)int_board_aux_message, strlen(int_board_aux_message), 500);
-					//e1c08k020l0200d05n2000p01000m001f0
+					localization = 9;
 				}
+				else if(z==4) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+				{
+					localization = 14;
+				}
+				else if(z==5) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+				{
+					localization = 0;
+				}
+				else if(z==6) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+				{
+					localization = 8;
+				}
+			}// end if(g == 0) // avtomat
+
+			if(z == 1)  // golova
+			{
+				// no electricity
+				impact_automat_state = 0;  // idle
 			}
+			else
+				impact_automat_state = 1;   // start new impact
 
-			//HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+		}// end if((input_message[0] == 't')&&(input_message[4] == 'h')&&(input_message[8] == 'z')&&(input_message[10] == 'g')&&(input_message[12] == 's'))
 
 
-			// формирования управляющей строки для генератора
+
+
+	}// end if(interface_board_new_message_received_flag_get())
+
+}// end void interface_board_action()
+
+
+void impact_action()
+{
+	char local_message[128];
+	static uint32_t start_delay_tick = 0;
+
+	static int num_of_iterations;
+	static int partial_n;
+
+	if(impact_automat_state == 1)
+	{
+		pulse_pain = 0;
+
+		while((GPIOB->IDR & GPIO_PIN_11) == (uint32_t)GPIO_PIN_RESET);
+
+		// sound
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+		HAL_Delay(2);
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+
+		sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);
+		HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+
+		start_delay_tick = HAL_GetTick();
+		impact_automat_state = 2;
+	}
+	else if(impact_automat_state == 2)
+	{
+		// pause 500 ms
+		if((HAL_GetTick() - start_delay_tick) > 700)
+			impact_automat_state = 3;
+	}
+	else if(impact_automat_state == 3)
+	{
+		// obschaya dlitelnost 3 sec
+		// kolichestvo iteracij second_k - 3
+		// n = 170 sootvetstvuet 1 sec
+		// n v odnoj iteracii = (3 * 170) / (second_k - 3)
+
+		num_of_iterations = second_k - 3;
+		partial_n = round((3.0 * 170.0) / ((double)second_k - 3.0));
+
+		impact_automat_state = 4;
+	}
+	else if(impact_automat_state == 4)
+	{
+		if(num_of_iterations < 0)
+		{
+			num_of_iterations = 23;
+			partial_n = 42;
+			impact_automat_state = 5;
 		}
+		else
+		{
+			if((GPIOB->IDR & GPIO_PIN_11) != (uint32_t)GPIO_PIN_RESET)
+			{
+				sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k - num_of_iterations, second_l, partial_n);
+				HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
 
+				num_of_iterations--;
+			}
+		}
+	}
+	else if(impact_automat_state == 5)
+	{
+		if(num_of_iterations < 0)
+		{
+			impact_automat_state = 0;
+			pulse_pain = 1;
+		}
+		else
+		{
+			if((GPIOB->IDR & GPIO_PIN_11) != (uint32_t)GPIO_PIN_RESET)
+			{
+				sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k, second_l, partial_n);
+				HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+
+				num_of_iterations--;
+			}
+		}
 
 	}
 }
+
+
+
+
+
+
 

@@ -68,12 +68,16 @@ int usart2_processed_messages = 0;
 
 int pulse_pain = 0;
 
+#define WEAK_TEST
+//#define STRONG_PAIN
+
 //*************************
-int localization = 8;		// 0-levaya ruka, 1-pravaya ruka, 8-levaya noga, 9-pravaya noga, 14-zhivot, 15-poyasnica
+int localization = -1;		// 0-levaya ruka, 1-pravaya ruka, 8-levaya noga, 9-pravaya noga, 14-zhivot, 15-poyasnica
 //*************************
-int prim_k = 32;
+#ifdef WEAK_TEST
+int prim_k = 8;
 int prim_l = 200;
-int prim_n = 5;
+int prim_n = 13;
 //*************************
 int second_k = 8;
 int second_l = 200;
@@ -83,11 +87,27 @@ int puls_k = 8;
 int puls_l = 200;
 int puls_n = 13;
 //*************************
+#endif
+#ifdef STRONG_PAIN
+int prim_k = 128;
+int prim_l = 200;
+int prim_n = 5;
+//*************************
+int second_k = 13;
+int second_l = 200;
+int second_n = 2000;
+//*************************
+int puls_k = 8;
+int puls_l = 200;
+int puls_n = 13;
+//*************************
+#endif
 
-int wound_action = 1;
+int impact_automat_state = 0;
 
 int main(void)
 {
+	//uint32_t delay_start_tick = 0;
 
 	/* MCU Configuration--------------------------------------------------------*/
 
@@ -180,6 +200,9 @@ int main(void)
 	HAL_Delay(50);
 	HAL_GPIO_WritePin(GPIOA, bt_reset, GPIO_PIN_SET);        // bluetooth power on reset
 	HAL_Delay(1000);
+	HAL_GPIO_WritePin(GPIOB, sw_btn_Pin, GPIO_PIN_SET);
+	HAL_Delay(100);
+	//HAL_GPIO_WritePin(GPIOB, sw_btn_Pin, GPIO_PIN_RESET);
 
 #ifdef DEBUG_STOP_WITH_BLINK
 	// stop after bt mode configuration
@@ -212,20 +235,34 @@ int main(void)
 	//usart2_buffer_obj_write_reset();
 	vest_new_message_received_flag_reset();
 
-	// DEBUG
+	// DEBUG sound
 	/*
 	while(1)
 	{
 		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
-		HAL_Delay(2000);
+		HAL_Delay(2);
 		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
-		HAL_Delay(2000);
+		HAL_Delay(3000);
+
+		power_button_action();
+
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+		HAL_Delay(2);
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+		HAL_Delay(2);
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
+		HAL_Delay(4);
+		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
+		HAL_Delay(3000);
+
+		power_button_action();
 	}
 	//*/
 	// DEBUG
 
 
-	/* Infinite loop */
+
+	// main loop
 	while (1)
 	{
 
@@ -255,6 +292,34 @@ int main(void)
 		vest_action();
 		//pulse_impact_action();
 		power_button_action();
+		impact_action();
+
+		// DEBUG *****************************************************
+		// repeating wound
+		/*
+		if((HAL_GetTick() - delay_start_tick) > 9000)
+		{
+
+			impact_automat_state = 1;
+
+			if(localization == 15)
+				localization = 14;
+			else if(localization == 14)
+				localization = 0;
+			else if(localization == 0)
+				localization = 1;
+			else if(localization == 1)
+				localization = 8;
+			else if(localization == 8)
+				localization = 9;
+			else if(localization == 9)
+				localization = 15;
+
+			delay_start_tick = HAL_GetTick();
+
+		}
+		//*/
+		// DEBUG *****************************************************
 	}
 
 }

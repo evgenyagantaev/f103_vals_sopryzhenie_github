@@ -8,5 +8,6 @@ void interface_board_new_message_received_flag_reset();
 int interface_board_new_message_received_flag_get();
 
 void interface_board_action();
+void impact_action();
 
 #endif  // INTERFACE_BOARD_INTERFACE_H
