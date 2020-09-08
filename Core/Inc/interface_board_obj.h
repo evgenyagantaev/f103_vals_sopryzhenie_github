@@ -9,4 +9,5 @@ static char input_message[INPUT_MESSAGE_LENGTH];
 
 static int interface_board_new_message_received_flag;
 
+
 #endif // INTERFACE_BOARD_OBJ_H

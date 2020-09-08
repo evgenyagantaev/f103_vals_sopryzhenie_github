@@ -23,9 +23,18 @@ extern int puls_k;
 extern int puls_l;
 extern int puls_n;
 //*************************
+
+extern int manzheta_k;
+
 extern int wound_action;
 
 extern int vest_interface_condition;   // ozhidanie adresa (0); adres poluchen (1)
+
+extern int band_mode;
+extern int debug_flag;
+extern int head_impact;
+
+extern int chaotic_impact_array[6];
 
 void vest_new_message_received_flag_set()
 {
@@ -105,13 +114,16 @@ void vest_receive_message(char *message_string)
 
 void vest_action()
 {
-	if(vest_new_message_received_flag_get())
+	//if(vest_new_message_received_flag_get())
+	if((HAL_GetTick() - pulse_timeout_marker) > PULSE_TIMEOUT)
 	{
 		vest_new_message_received_flag_reset();
+		pulse_timeout_marker = HAL_GetTick();
+
 
 		//usart2_buffer_get_message(vest_message);
 
-		if((vest_message[0] == 'R') && strlen(vest_message) == 3) // new R-marker
+		//if((vest_message[0] == 'R') && strlen(vest_message) == 3) // new R-marker
 		{
 
 			pulse_impact_new_r_pick_detected_flag_set();
@@ -143,8 +155,26 @@ void vest_action()
 
 				if(localization != -1)
 				{
-					sprintf(aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f2\r\n", localization, puls_k, puls_l, puls_n);
-					HAL_UART_Transmit(&huart3, (uint8_t *)aux_message, strlen(aux_message), 500);
+					if(band_mode)
+					{
+						localization = 12;
+						sprintf(aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f2\r\n", localization, manzheta_k, puls_l, puls_n);
+						HAL_UART_Transmit(&huart3, (uint8_t *)aux_message, strlen(aux_message), 500);
+					}
+					else
+					{
+						if(head_impact)
+						{
+							localization = chaotic_impact_array[HAL_GetTick()%6]; //
+							sprintf(aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f2\r\n", localization, puls_k, puls_l, puls_n);
+							HAL_UART_Transmit(&huart3, (uint8_t *)aux_message, strlen(aux_message), 500);
+						}
+						else
+						{
+							sprintf(aux_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f2\r\n", localization, puls_k, puls_l, puls_n);
+							HAL_UART_Transmit(&huart3, (uint8_t *)aux_message, strlen(aux_message), 500);
+						}
+					}
 				}
 			}
 
@@ -177,6 +207,13 @@ void vest_action()
 			ssd1306_WriteString(aux_message, Font_11x18, White);
 			ssd1306_UpdateScreen();
 			//*/
+		}
+
+		if((vest_message[0] == 'b') && (vest_message[1] == 'a') && (vest_message[2] == 'n') && band_mode == 0) // switch to band mode
+		{
+			band_mode = 1;
+			//debug************************
+			debug_flag = 1;
 		}
 
 

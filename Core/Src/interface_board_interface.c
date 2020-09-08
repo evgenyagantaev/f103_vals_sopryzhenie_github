@@ -26,10 +26,18 @@ extern int puls_k;
 extern int puls_l;
 extern int puls_n;
 //*************************
+
+extern int manzheta_k;
+
 extern int wound_action;
 extern int stop_previous_impact;
 extern int impact_automat_state;
 
+extern int band_mode;
+extern int head_impact;
+extern int debug_flag;
+
+extern int chaotic_impact_array[6];
 
 void interface_board_new_message_received_flag_set()
 {
@@ -54,6 +62,7 @@ void interface_board_object_init()
 
 void interface_board_action()
 {
+	char local_message[128];
 
 	// DEBUG ************************************************************************
 	/*
@@ -73,8 +82,13 @@ void interface_board_action()
 	//*/
 	// DEBUG ************************************************************************
 
+//#define TEST_WITHOUT_SLIB
 
+#ifndef TEST_WITHOUT_SLIB
 	if(interface_board_new_message_received_flag_get())
+#else
+	if(debug_flag)
+#endif
 	{
 
 
@@ -95,7 +109,11 @@ void interface_board_action()
 
 		unsigned int t, h, z, g, s;
 
+#ifndef TEST_WITHOUT_SLIB
 		if((input_message[0] == 't')&&(input_message[4] == 'h')&&(input_message[8] == 'z')&&(input_message[10] == 'g')&&(input_message[12] == 's'))
+#else
+		if(debug_flag)
+#endif
 		{
 			sscanf(input_message, "t%3uh%3uz%1ug%1us%3u\r\n", &t, &h, &z, &g, &s);
 
@@ -103,20 +121,40 @@ void interface_board_action()
 			if(h == 0)
 			{
 				// отработка летального поражения
-
+				sprintf(local_message, "smoke\r\n");
+				HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
 			}
 
 			pulse_pain = 0;
 
+#ifndef TEST_WITHOUT_SLIB
 			if(g == 0) // avtomat
+#else
+			if(debug_flag)
+#endif
 			{
+#ifndef TEST_WITHOUT_SLIB
 				if(z==0) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
+#else
+				if(debug_flag)
+#endif
 				{
+					debug_flag = 0;
+
+#ifdef TEST_WITHOUT_SLIB
+					head_impact = 1;
+					localization = -1;
+#else
 					localization = 15;
+#endif
 				}
 				else if(z==1) // 1 - golova, 0 - spina, 4 - grud, 6 - levaya noga, 3 - pravaya noga, 5 - levaya ruka, 2 - pravaya ruka
 				{
+					head_impact = 1;
+
 					localization = -1;
+
+
 					// sound
 					HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_RESET);
 					HAL_Delay(1);
@@ -214,13 +252,11 @@ void interface_board_action()
 				}
 			}// end if(g == 0) // avtomat
 
-			if(z == 1)  // golova
-			{
-				// no electricity
-				impact_automat_state = 0;  // idle
-			}
+			if(localization == -1)
+				head_impact = 1;
 			else
-				impact_automat_state = 1;   // start new impact
+				head_impact = 0;
+			impact_automat_state = 1;   // start new impact
 
 		}// end if((input_message[0] == 't')&&(input_message[4] == 'h')&&(input_message[8] == 'z')&&(input_message[10] == 'g')&&(input_message[12] == 's'))
 
@@ -251,8 +287,26 @@ void impact_action()
 		HAL_Delay(2);
 		HAL_GPIO_WritePin(sound_power_GPIO_Port, sound_power_Pin, GPIO_PIN_SET);
 
-		sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);
-		HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+		if(band_mode)
+		{
+			localization = 12;
+			sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, manzheta_k, prim_l, prim_n);
+			HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+		}
+		else
+		{
+			if(head_impact)
+			{
+				localization = chaotic_impact_array[HAL_GetTick()%6]; //
+				sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);
+				HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+			}
+			else
+			{
+				sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);
+				HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+			}
+		}
 
 		start_delay_tick = HAL_GetTick();
 		impact_automat_state = 2;
@@ -287,8 +341,26 @@ void impact_action()
 		{
 			if((GPIOB->IDR & GPIO_PIN_11) != (uint32_t)GPIO_PIN_RESET)
 			{
-				sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k - num_of_iterations, second_l, partial_n);
-				HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+				if(band_mode)
+				{
+					localization = 12;
+					sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, manzheta_k - num_of_iterations, second_l, partial_n);
+					HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+				}
+				else
+				{
+					if(head_impact)
+					{
+						localization = chaotic_impact_array[num_of_iterations%6]; //
+						sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);
+						HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+					}
+					else
+					{
+						sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k - num_of_iterations, second_l, partial_n);
+						HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+					}
+				}
 
 				num_of_iterations--;
 			}
@@ -300,13 +372,34 @@ void impact_action()
 		{
 			impact_automat_state = 0;
 			pulse_pain = 1;
+
+			if(head_impact)
+				localization = 15;
 		}
 		else
 		{
 			if((GPIOB->IDR & GPIO_PIN_11) != (uint32_t)GPIO_PIN_RESET)
 			{
-				sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k, second_l, partial_n);
-				HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+				if(band_mode)
+				{
+					localization = 12;
+					sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, manzheta_k, second_l, partial_n);
+					HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+				}
+				else
+				{
+					if(head_impact)
+					{
+						localization = chaotic_impact_array[num_of_iterations%6]; //
+						sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, prim_k, prim_l, prim_n);
+						HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+					}
+					else
+					{
+						sprintf(local_message, "e1c%02dk%03dl%04dd05n%04dp01000m001f0\r\n", localization, second_k, second_l, partial_n);
+						HAL_UART_Transmit(&huart3, (uint8_t *)local_message, strlen(local_message), 500);
+					}
+				}
 
 				num_of_iterations--;
 			}

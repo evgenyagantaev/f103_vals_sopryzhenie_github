@@ -68,13 +68,17 @@ int usart2_processed_messages = 0;
 
 int pulse_pain = 0;
 
-#define WEAK_TEST
-//#define STRONG_PAIN
+int band_mode = 0;
+int head_impact = 0;
+int debug_flag = 1;
+
+
+#define STRONG_PAIN
 
 //*************************
 int localization = -1;		// 0-levaya ruka, 1-pravaya ruka, 8-levaya noga, 9-pravaya noga, 14-zhivot, 15-poyasnica
 //*************************
-#ifdef WEAK_TEST
+#ifndef STRONG_PAIN
 int prim_k = 8;
 int prim_l = 200;
 int prim_n = 13;
@@ -89,21 +93,25 @@ int puls_n = 13;
 //*************************
 #endif
 #ifdef STRONG_PAIN
-int prim_k = 128;
+int prim_k = 300;
 int prim_l = 200;
-int prim_n = 5;
+int prim_n = 70;
 //*************************
-int second_k = 13;
+int second_k = 128;
 int second_l = 200;
 int second_n = 2000;
 //*************************
-int puls_k = 8;
+int puls_k = 32;
 int puls_l = 200;
-int puls_n = 13;
+int puls_n = 7;
 //*************************
 #endif
 
+int manzheta_k = 128;
+
 int impact_automat_state = 0;
+
+int chaotic_impact_array[] = {0, 9, 15, 1, 14, 8}; // 6 elements
 
 int main(void)
 {

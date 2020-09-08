@@ -16,4 +16,7 @@ static char vest_address_string[13];
 
 static int vest_address_received_flag;
 
+static uint32_t pulse_timeout_marker;
+#define PULSE_TIMEOUT 670
+
 #endif // VEST_OBJ_H
